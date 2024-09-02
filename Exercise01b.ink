@@ -15,3 +15,4 @@ This exercise will demonstrate the following in the example video:
 */
 
 This is our basic story example! Goodbye!
+This is a test
