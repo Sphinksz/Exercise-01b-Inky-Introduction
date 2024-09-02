@@ -2,8 +2,8 @@
 
 My name is:
 
-[Your Name]
+[Blake Swing]
 
 My github username is:
 
-[Your Username]
+[Sphinksz]
