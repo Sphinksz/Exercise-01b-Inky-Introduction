@@ -5,6 +5,8 @@ Created by: Blake Swing
 
 // Variables
 
+
+
 LIST attackerTypes = (Enemy), (Player)
 LIST combatChoice = (Attack), (Defend)
 
@@ -32,6 +34,7 @@ VAR enemy_combat_choice = ""
 VAR player_combat_choice = ""
 
 VAR damage = 0
+VAR amountToAdd = 0
 
 VAR defending = false
 
@@ -42,23 +45,22 @@ VAR whileValue = 0
 
 VAR Count = 0
 
-// RANDOM(min,max) #
-// LIST_RANDOM
+VAR Health = 15
+VAR Experience = 0
+VAR Strength = 1
 
+-> BeginningOfGame
 
--> cave_mouth // Redirect
-
-== cave_mouth == // Knot
-You are at the entrance to a cave. {torch_pickup: |There is a torch on the floor in front of you.} The cave extends to the east and west. // {knot name: true value | false value }  conditional
-+ [Test] ->TestMethod
-+ [Take the east tunnel] -> east_tunnel_entrance
-+ [Take the west tunnel] -> west_tunnel_entrance // Brackets makes it not repeat in convo
-* [Pick up torch] -> torch_pickup
-
-== TestMethod ==
+== BeginningOfGame ==
+    Welcome adventurer. You are about to embark on a small journey. Have fun!
+    *[Continue] ->cave_mouth
     
-    ~while(Count,3,"Count+=1")
-    ->DONE
+
+== cave_mouth == 
+You are at the entrance to a cave. {torch_pickup: |There is a torch on the floor in front of you.} The cave extends to the east and west.
++ [Take the east tunnel] -> east_tunnel_entrance
++ [Take the west tunnel] -> west_tunnel_entrance
+* [Pick up torch] -> torch_pickup
 
 == east_tunnel_entrance ==
 You enter the east tunnel. It is dark and you can hardly see anything.
@@ -113,14 +115,22 @@ You move closer to the shine you saw, and find out it was a set of steel armor a
 
 == east_tunnel_bossRoom_encounter_end ==
     The {current_enemy} falls to the ground, perishing before you. You have successfully defeated the creature! Congratulations!
+    {current_enemy:
+        -Orc: ~amountToAdd = 100
+        -Goblin: ~amountToAdd = 30
+    }
+    ~ alterStat(Experience, amountToAdd)
+    
     After the intense battle with the creature, the door in front of you swings open. You ready yourself, prepared for combat again...
     *[Continue] ->
     ->END
     
+
 == combat ==
     What will you do?
     ~rollCombatOrder()
     ~rollNPCCombatMove()
+    ~defending = false
     +[Attack]
         ~player_combat_choice = "Attack"
         -> handleCombat
@@ -143,10 +153,10 @@ You move closer to the shine you saw, and find out it was a set of steel armor a
     {
     -npc_current_health <= 0:
         ->east_tunnel_bossRoom_encounter_end
-    -player_current_health <= 0:
+    -Health <= 0:
         ->handleDeath
     -else:
-        -> combat
+        ->combat
     }
     ->END
 
@@ -169,7 +179,8 @@ You acquire a torch! What are you going to use this for?
 == equip_gear ==
 You're now wearing steel armor and are holding a torch and a sword!
 ~ geared = true
-~ player_current_health = player_geared_health
+~ Health +=85
+The armor has increased your Health by 85. You now have {Health} health.
 * [Return to front] ->east_tunnel_room2
 -> END
 
@@ -189,8 +200,8 @@ You're now wearing steel armor and are holding a torch and a sword!
         { - defending && geared: 
                 You swiftly lift your sword, blocking the {current_enemy}'s attack!
           - else: 
-            ~ player_current_health -= damage
-            The {current_enemy} hits you, dealing {damage} and leaving you with {player_current_health} health.
+            ~ alterStat(Health, -damage)
+            The {current_enemy} hits you, dealing {damage} and leaving you with {Health} health.
         }
         
     -else:
@@ -221,28 +232,23 @@ You're now wearing steel armor and are holding a torch and a sword!
             ~ return RANDOM(goblin_min_damage, goblin_max_damage)
     }
     
+    
 
-=== function setHP(target) ===
-    ~return
-    
-=== function while(x, y, z) ===
-    ~whileValue = x
-    ~WhileNotLoop(y,z)
-    - 
-    
-=== function WhileNotLoop(y,z) ===
-     {whileValue != y:
-        whileValue = ~{z}
-        Count
-        ~WhileNotLoop(y,z)
+=== function alterStat(ref variable, amount) ===
+    ~temp originalValue = variable
+    ~variable += amount
+    {variable:
+        - Health:
+            {originalValue < variable:
+                You have healed by {amount}.
+            -else:
+                You have lost {amount} health.
+            }
+            You now have {variable} health.
+        - Experience:
+            You have gained {amount} experience. You now have {variable} experience.
     }
     
-=== function getDictionaryKeyByValue(dict, x) ===
-    ~return
-=== function getDictionaryValueByKey(dict, x) ===
-    ~return
-=== function getDictionaryKeyByPosition(dict, x) ===
-    ~return
-=== function getDictionaryValueByPosition(dict, x) ===
-    ~return
+    
+    
     
