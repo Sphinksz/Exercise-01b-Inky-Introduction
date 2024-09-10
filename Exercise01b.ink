@@ -82,7 +82,7 @@ Current stats: {Health} Health. {Perception} Perception. {Strength} Strength.
 {Beginner_Stats_Applied == false: Adventurer, before we begin, you must set your stats. You currently are at {Health} Health, {Strength} Strength, and {Perception} Perception. You will be given 15 stat points to begin the game. Utilize them wisely. After you use these, You will be required to earn experience to gain more stat points.}
 +{Beginner_Stats_Applied == false} [Upgrade Stats] ->upgrade
     
-*{Beginner_Stats_Applied == true}Congrats on upgrading your stats. Let's begin your adventure! 
++{Beginner_Stats_Applied == true}Congrats on upgrading your stats. Let's begin your adventure! 
 ->cave_mouth
     
 
@@ -115,6 +115,7 @@ You enter the first room of the east tunnel. You look around the small room and 
 == east_tunnel_room2 ==
 {equip_gear: You've returned to the previous room, donned in your new steel armor. You see the staircase on the left. What will you do? | As you enter the room, you feel a gust of wind and shiver at the chill. This gust almost blows out your torch, but luckily the embers re-kindle the flame. The room is smaller and darker than the previous, with it being further from the entrance and natural sunlight. You notice a decending staircase on the left and catch a glimpse of a shiny object back in the right corner. What will you do?}
 * [Go downstairs] -> east_tunnel_bossRoom
++ [FallTest] -> fallInSpikeTrap
 + [Return to previous room] -> east_tunnel_room1
 * [Inspect right corner] -> east_tunnel_room2_encounter_treasure -> east_tunnel_room2
 
@@ -311,7 +312,8 @@ What will you do?
 
 == handleDeath ==
     You have fallen in combat... your eyes shut and the world goes black.
-    *[Restart] ->cave_mouth
+    ~Beginner_Stats_Applied = false
+    *[Restart] ->Start
 
 // Conditionals
 
@@ -337,6 +339,15 @@ You acquire a torch! What are you going to use this for?
 
 //Functions
 
+=== fallInSpikeTrap ===
+    ~temp loopCount = (Health/10) + 1
+    ~temp damageType = "Fire"
+    ~loop2(loopCount,  ->takeCountDamage)
+    {
+    -Health <=0:
+        ->handleDeath
+    }
+    
 
 === function rollCombatOrder() ===
     ~first_attacker = LIST_RANDOM(attackerTypes)
@@ -405,9 +416,21 @@ You acquire a torch! What are you going to use this for?
             You have gained {amount} experience. You now have {variable} experience.
     }
     
-
-VAR wordToTest = "apple"
-
+=== function takeSpikeDamage 
+    The sharp spikes impale you, dealing 10 damage.
+    ~alterStat(Health, -10)
+    
+=== function takeCountDamage()
+    ~temp type = "Fire"
+    ~temp damageToDo = RANDOM(-20,-9)
+    {type:
+        - "Fire": You are on fire! You burn, taking {damageToDo} damage!
+        - "Impale": You have been impaled! You bleed, taking {damageToDo} damage!
+        - "Ice": You are freezing! Your skin frosts over, dealing {damageToDo} damage!
+        - else: Error. [TakeCountDamage]
+    }
+    ~alterStat(Health, damageToDo)
+    
 === function loop(count)
 {count} bottles of beer on the wall...
 {count > 0: 
